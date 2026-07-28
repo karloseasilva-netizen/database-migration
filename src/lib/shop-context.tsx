@@ -24,6 +24,7 @@ type CartCtx = {
   cartCount: number;
   cartTotal: number;
   products: Product[];
+  settings: Record<string, any>;
 };
 
 const Ctx = createContext<CartCtx | null>(null);
@@ -65,6 +66,29 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   });
 
   const products = dbProducts ?? PRODUCTS;
+
+  const { data: dbSettings = null } = useQuery({
+    queryKey: ["shop", "settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_settings")
+        .select("*");
+      if (error) throw error;
+      const map: Record<string, any> = {};
+      for (const r of (data ?? []) as any[]) map[r.key] = r.value;
+      return map;
+    },
+  });
+
+  const settings = dbSettings ?? {
+    store: {
+      name: "Puro Fio Lingerie",
+      email: "contato@purofio.com",
+      phone: "(11) 99999-0000",
+      cnpj: "",
+      address: "",
+    }
+  };
 
   const favorites = useMemo(() => new Set(favArr), [favArr]);
 
@@ -123,6 +147,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     cartCount,
     cartTotal,
     products,
+    settings,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

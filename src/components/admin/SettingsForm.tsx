@@ -40,6 +40,7 @@ export function SettingsForm({
     try {
       await save({ data: { key: sectionKey, value: form } });
       await qc.invalidateQueries({ queryKey: ["admin", "settings"] });
+      await qc.invalidateQueries({ queryKey: ["shop", "settings"] });
       toast.success("Configurações salvas");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao salvar");
