@@ -23,7 +23,8 @@ import { Shield } from "lucide-react";
 import logoUrl from "@/assets/logo-puro-fio.png";
 
 export function Header() {
-  const { cartCount, setCartOpen } = useShop();
+  const { cartCount, setCartOpen, settings } = useShop();
+  const store = settings.store ?? {};
   const [query, setQuery] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -32,28 +33,30 @@ export function Header() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const rolesQuery = useQuery({
-    queryKey: ["me", "roles", user?.id],
+  const { data: myRoles } = useQuery({
+    queryKey: ["header", "roles", user?.id],
     queryFn: () => getMyRoles(),
     enabled: !!user,
-    staleTime: 60_000,
   });
-  const isAdmin = rolesQuery.data?.roles.includes("admin");
+  const isAdmin = myRoles?.roles?.includes("admin") || myRoles?.roles?.includes("funcionario");
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate({ to: "/" });
+    navigate({ to: "/", replace: true });
   };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const q = query.trim();
-    navigate({ to: "/produtos", search: q ? { q } : {} });
+    navigate({ to: "/produtos", search: query ? { q: query } : {} });
     setMobileSearchOpen(false);
   };
 
@@ -69,9 +72,11 @@ export function Header() {
           </span>
           <span className="sm:hidden opacity-95">Frete grátis acima de R$ 199</span>
           <div className="flex items-center gap-4">
-            <a href="tel:+5511999999999" className="hidden sm:inline-flex items-center gap-1 hover:opacity-80">
-              <Phone className="h-3 w-3" /> (11) 99999-9999
-            </a>
+            {store.phone && (
+              <a href={`tel:${store.phone.replace(/\D/g, "")}`} className="hidden sm:inline-flex items-center gap-1 hover:opacity-80">
+                <Phone className="h-3 w-3" /> {store.phone}
+              </a>
+            )}
             {user ? (
               <button onClick={signOut} className="inline-flex items-center gap-1 hover:opacity-80">
                 <LogOut className="h-3 w-3" /> Sair
