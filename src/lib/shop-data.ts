@@ -67,7 +67,30 @@ export type Product = {
   rating: number;
   reviews: number;
   stock: number;
+  isFeatured?: boolean;
 };
+
+export function mapDbProductToProduct(dbProduct: any): Product {
+  return {
+    id: dbProduct.slug || dbProduct.id,
+    name: dbProduct.name,
+    price: Number(dbProduct.price),
+    oldPrice: dbProduct.old_price ? Number(dbProduct.old_price) : undefined,
+    discount: dbProduct.discount || undefined,
+    tag: dbProduct.tag || undefined,
+    image: dbProduct.image_url,
+    gallery: Array.isArray(dbProduct.gallery) ? dbProduct.gallery : [],
+    categorySlug: dbProduct.category_slug,
+    sub: dbProduct.sub,
+    description: dbProduct.description,
+    colors: Array.isArray(dbProduct.colors) ? dbProduct.colors : [],
+    sizes: Array.isArray(dbProduct.sizes) ? dbProduct.sizes : [],
+    rating: Number(dbProduct.rating || 5),
+    reviews: Number(dbProduct.reviews || 0),
+    stock: Number(dbProduct.stock || 0),
+    isFeatured: dbProduct.is_featured || false,
+  };
+}
 
 export const PRODUCTS: Product[] = [
   {

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PRODUCTS } from "@/lib/shop-data";
+import { useShop } from "@/lib/shop-context";
 import { ProductListing } from "@/components/shop/ProductListing";
 import { PageHeader } from "@/components/shop/PageHeader";
 
@@ -16,7 +16,8 @@ export const Route = createFileRoute("/ofertas")({
 });
 
 function OffersPage() {
-  const products = PRODUCTS.filter((p) => p.discount);
+  const { products: allProducts } = useShop();
+  const products = allProducts.filter((p) => p.discount);
   const subs = Array.from(new Set(products.map((p) => p.sub))).sort();
   return (
     <div className="pb-16">

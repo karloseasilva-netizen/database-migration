@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus, X, ShoppingBag, ShieldCheck, Truck } from "lucide-react";
-import { PRODUCTS, brl } from "@/lib/shop-data";
+import { brl } from "@/lib/shop-data";
 import { useShop } from "@/lib/shop-context";
 
 export const Route = createFileRoute("/carrinho")({
@@ -16,14 +16,14 @@ export const Route = createFileRoute("/carrinho")({
 });
 
 function CartPage() {
-  const { cart, addToCart, decCart, removeFromCart, cartTotal, cartCount, clearCart } =
+  const { cart, addToCart, decCart, removeFromCart, cartTotal, cartCount, clearCart, products } =
     useShop();
   const items = Object.entries(cart)
     .map(([id, qty]) => {
-      const p = PRODUCTS.find((x) => x.id === id);
+      const p = products.find((x) => x.id === id);
       return p ? { p, qty } : null;
     })
-    .filter(Boolean) as { p: (typeof PRODUCTS)[number]; qty: number }[];
+    .filter(Boolean) as { p: any; qty: number }[];
 
   const shipping = cartTotal >= 199 ? 0 : cartTotal > 0 ? 19.9 : 0;
   const pixTotal = (cartTotal + shipping) * 0.95;

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { CheckCircle2, CreditCard, QrCode, Barcode } from "lucide-react";
-import { PRODUCTS, brl } from "@/lib/shop-data";
+import { brl } from "@/lib/shop-data";
 import { useShop } from "@/lib/shop-context";
 
 export const Route = createFileRoute("/checkout")({
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/checkout")({
 type PaymentMethod = "pix" | "credit" | "boleto";
 
 function CheckoutPage() {
-  const { cart, cartTotal, cartCount, clearCart } = useShop();
+  const { cart, cartTotal, cartCount, clearCart, products } = useShop();
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [payment, setPayment] = useState<PaymentMethod>("pix");
@@ -27,10 +27,10 @@ function CheckoutPage() {
 
   const items = Object.entries(cart)
     .map(([id, qty]) => {
-      const p = PRODUCTS.find((x) => x.id === id);
+      const p = products.find((x) => x.id === id);
       return p ? { p, qty } : null;
     })
-    .filter(Boolean) as { p: (typeof PRODUCTS)[number]; qty: number }[];
+    .filter(Boolean) as { p: any; qty: number }[];
 
   const shipping = cartTotal >= 199 ? 0 : cartTotal > 0 ? 19.9 : 0;
   const total = cartTotal + shipping;

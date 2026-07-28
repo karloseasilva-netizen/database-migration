@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
-import { PRODUCTS } from "@/lib/shop-data";
 import { useShop } from "@/lib/shop-context";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { PageHeader } from "@/components/shop/PageHeader";
@@ -18,8 +17,8 @@ export const Route = createFileRoute("/favoritos")({
 });
 
 function FavoritesPage() {
-  const { favorites } = useShop();
-  const items = PRODUCTS.filter((p) => favorites.has(p.id));
+  const { favorites, products } = useShop();
+  const items = products.filter((p) => favorites.has(p.id));
 
   return (
     <div className="pb-16">

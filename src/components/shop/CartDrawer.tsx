@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { X, Plus, Minus } from "lucide-react";
 import { useShop } from "@/lib/shop-context";
-import { PRODUCTS, brl } from "@/lib/shop-data";
+import { brl } from "@/lib/shop-data";
 
 export function CartDrawer() {
   const {
@@ -13,6 +13,7 @@ export function CartDrawer() {
     addToCart,
     decCart,
     removeFromCart,
+    products,
   } = useShop();
 
   if (!cartOpen) return null;
@@ -42,7 +43,7 @@ export function CartDrawer() {
             </p>
           )}
           {Object.entries(cart).map(([id, qty]) => {
-            const p = PRODUCTS.find((x) => x.id === id);
+            const p = products.find((x) => x.id === id);
             if (!p) return null;
             return (
               <div

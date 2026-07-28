@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { PRODUCTS } from "@/lib/shop-data";
+import { useShop } from "@/lib/shop-context";
 import { ProductListing } from "@/components/shop/ProductListing";
 import { PageHeader } from "@/components/shop/PageHeader";
 
@@ -24,7 +24,8 @@ export const Route = createFileRoute("/produtos/")({
 
 function ProductsPage() {
   const { q } = Route.useSearch();
-  const allSubs = Array.from(new Set(PRODUCTS.map((p) => p.sub))).sort();
+  const { products } = useShop();
+  const allSubs = Array.from(new Set(products.map((p) => p.sub))).sort();
   return (
     <div className="pb-16">
       <PageHeader
@@ -33,7 +34,7 @@ function ProductsPage() {
         crumbs={[{ label: "Produtos" }]}
       />
       <div className="mx-auto max-w-7xl px-4 mt-8">
-        <ProductListing products={PRODUCTS} subs={allSubs} initial={{ q }} />
+        <ProductListing products={products} subs={allSubs} initial={{ q }} />
       </div>
     </div>
   );

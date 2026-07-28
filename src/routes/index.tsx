@@ -19,6 +19,7 @@ import {
   PRODUCTS,
 } from "@/lib/shop-data";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { useShop } from "@/lib/shop-context";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,12 +40,17 @@ export const Route = createFileRoute("/")({
 function Home() {
   const [heroIndex, setHeroIndex] = useState(0);
   const featuredRef = useRef<HTMLDivElement | null>(null);
-  const featured = FEATURED_IDS.map((id) => PRODUCTS.find((p) => p.id === id)!).filter(
-    Boolean,
-  );
-  const offers = OFFER_IDS.map((id) => PRODUCTS.find((p) => p.id === id)!).filter(
-    Boolean,
-  );
+  const { products } = useShop();
+
+  const dbFeatured = products.filter((p) => p.isFeatured);
+  const featured = dbFeatured.length > 0
+    ? dbFeatured
+    : FEATURED_IDS.map((id) => products.find((p) => p.id === id)!).filter(Boolean);
+
+  const dbOffers = products.filter((p) => p.discount);
+  const offers = dbOffers.length > 0
+    ? dbOffers
+    : OFFER_IDS.map((id) => products.find((p) => p.id === id)!).filter(Boolean);
 
   const { data: dbBanners } = useQuery({
     queryKey: ["home", "banners"],

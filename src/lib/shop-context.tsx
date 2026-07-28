@@ -7,7 +7,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { PRODUCTS } from "./shop-data";
+import { PRODUCTS, mapDbProductToProduct, type Product } from "./shop-data";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type CartCtx = {
   cart: Record<string, number>;
@@ -21,6 +23,7 @@ type CartCtx = {
   toggleFav: (id: string) => void;
   cartCount: number;
   cartTotal: number;
+  products: Product[];
 };
 
 const Ctx = createContext<CartCtx | null>(null);
@@ -48,6 +51,20 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useLocal<Record<string, number>>("pf:cart", {});
   const [favArr, setFavArr] = useLocal<string[]>("pf:fav", []);
   const [cartOpen, setCartOpen] = useState(false);
+
+  const { data: dbProducts = null } = useQuery({
+    queryKey: ["shop", "products"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_active", true);
+      if (error) throw error;
+      return (data ?? []).map(mapDbProductToProduct);
+    },
+  });
+
+  const products = dbProducts ?? PRODUCTS;
 
   const favorites = useMemo(() => new Set(favArr), [favArr]);
 
@@ -89,7 +106,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const p = PRODUCTS.find((x) => x.id === id);
+    const p = products.find((x) => x.id === id);
     return sum + (p ? p.price * qty : 0);
   }, 0);
 
@@ -105,6 +122,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     toggleFav,
     cartCount,
     cartTotal,
+    products,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

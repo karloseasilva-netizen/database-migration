@@ -7,10 +7,35 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { PageHeader } from "@/components/shop/PageHeader";
 
 export const Route = createFileRoute("/produtos/$id")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { mapDbProductToProduct } = await import("@/lib/shop-data");
+
+    let dbProduct = null;
+    const { data: bySlug } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", params.id)
+      .maybeSingle();
+    dbProduct = bySlug;
+
+    if (!dbProduct && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      const { data: byId } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", params.id)
+        .maybeSingle();
+      dbProduct = byId;
+    }
+
+    if (dbProduct) {
+      return { product: mapDbProductToProduct(dbProduct) };
+    }
+
+    const { getProduct } = await import("@/lib/shop-data");
     const product = getProduct(params.id);
     if (!product) throw notFound();
-    return { product } as { product: NonNullable<ReturnType<typeof getProduct>> };
+    return { product };
   },
   head: ({ loaderData }) => ({
     meta: loaderData
@@ -27,14 +52,14 @@ export const Route = createFileRoute("/produtos/$id")({
 
 function ProductPage() {
   const { product } = Route.useLoaderData() as { product: Product };
-  const { addToCart, favorites, toggleFav } = useShop();
+  const { addToCart, favorites, toggleFav, products } = useShop();
   const [qty, setQty] = useState(1);
   const [size, setSize] = useState(product.sizes[0]);
   const [color, setColor] = useState(product.colors[0]);
   const [imgIdx, setImgIdx] = useState(0);
   const gallery = product.gallery ?? [product.image];
   const cat = getCategory(product.categorySlug);
-  const related = PRODUCTS.filter(
+  const related = products.filter(
     (p) => p.categorySlug === product.categorySlug && p.id !== product.id,
   ).slice(0, 4);
   const favorited = favorites.has(product.id);

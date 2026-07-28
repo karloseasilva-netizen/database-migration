@@ -1,7 +1,8 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { getCategory, productsByCategory } from "@/lib/shop-data";
+import { getCategory } from "@/lib/shop-data";
+import { useShop } from "@/lib/shop-context";
 import { ProductListing } from "@/components/shop/ProductListing";
 import { PageHeader } from "@/components/shop/PageHeader";
 
@@ -38,7 +39,8 @@ export const Route = createFileRoute("/categoria/$slug")({
 function CategoryPage() {
   const { category } = Route.useLoaderData();
   const { sub } = Route.useSearch();
-  const products = productsByCategory(category.slug);
+  const { products: allProducts } = useShop();
+  const products = allProducts.filter((p) => p.categorySlug === category.slug);
 
   return (
     <div className="pb-16">
