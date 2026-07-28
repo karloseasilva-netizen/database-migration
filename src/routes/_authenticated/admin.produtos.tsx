@@ -118,6 +118,7 @@ function ProductsAdmin() {
       toast.success("Produto salvo!");
       setModal(null);
       qc.invalidateQueries({ queryKey: ["admin"] });
+      qc.invalidateQueries({ queryKey: ["shop"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -127,6 +128,7 @@ function ProductsAdmin() {
     onSuccess: () => {
       toast.success("Produto removido.");
       qc.invalidateQueries({ queryKey: ["admin"] });
+      qc.invalidateQueries({ queryKey: ["shop"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
