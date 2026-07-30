@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 import { reportSales } from "@/lib/admin-extra.functions";
 import { brl } from "@/lib/shop-data";
 
@@ -57,7 +65,13 @@ function SalesReport() {
             <XAxis dataKey="date" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} />
             <Tooltip formatter={(v: any) => brl(Number(v))} />
-            <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+            <Line
+              type="monotone"
+              dataKey="revenue"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              dot={false}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -76,7 +90,9 @@ function SalesReport() {
             </div>
           ))}
           {!data.orders.length && (
-            <div className="p-6 text-center text-sm text-muted-foreground">Nenhum pedido no período.</div>
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              Nenhum pedido no período.
+            </div>
           )}
         </div>
       </div>

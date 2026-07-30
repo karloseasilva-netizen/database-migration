@@ -85,9 +85,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Puro Fio Lingerie — Elegância & Confiança" },
-      { name: "description", content: "Lingerie que valoriza sua essência com delicadeza, conforto e sofisticação. Parcele em até 10x sem juros e ganhe 5% OFF no PIX." },
+      {
+        name: "description",
+        content:
+          "Lingerie que valoriza sua essência com delicadeza, conforto e sofisticação. Parcele em até 10x sem juros e ganhe 5% OFF no PIX.",
+      },
       { property: "og:title", content: "Puro Fio Lingerie" },
-      { property: "og:description", content: "Lingeries que valorizam sua essência com delicadeza, conforto e sofisticação." },
+      {
+        property: "og:description",
+        content: "Lingeries que valorizam sua essência com delicadeza, conforto e sofisticação.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

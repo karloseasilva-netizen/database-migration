@@ -56,10 +56,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const { data: dbProducts = null } = useQuery({
     queryKey: ["shop", "products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true);
+      const { data, error } = await supabase.from("products").select("*").eq("is_active", true);
       if (error) throw error;
       return (data ?? []).map(mapDbProductToProduct);
     },
@@ -70,9 +67,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const { data: dbSettings = null } = useQuery({
     queryKey: ["shop", "settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("store_settings")
-        .select("*");
+      const { data, error } = await supabase.from("store_settings").select("*");
       if (error) throw error;
       const map: Record<string, any> = {};
       for (const r of (data ?? []) as any[]) map[r.key] = r.value;
@@ -87,7 +82,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       phone: "(11) 99999-0000",
       cnpj: "",
       address: "",
-    }
+    },
   };
 
   const favorites = useMemo(() => new Set(favArr), [favArr]);
@@ -122,9 +117,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => setCart({}), [setCart]);
   const toggleFav = useCallback(
     (id: string) =>
-      setFavArr((prev) =>
-        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-      ),
+      setFavArr((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
     [setFavArr],
   );
 

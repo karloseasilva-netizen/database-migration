@@ -18,8 +18,7 @@ export function ProductCard({
     variant === "carousel"
       ? "shrink-0 basis-[70%] sm:basis-[45%] lg:basis-[calc((100%-4*1.25rem)/5)] min-w-[220px] snap-start flex flex-col cursor-pointer group"
       : "flex flex-col cursor-pointer group";
-  const goToProduct = () =>
-    navigate({ to: "/produtos/$id", params: { id: product.id } });
+  const goToProduct = () => navigate({ to: "/produtos/$id", params: { id: product.id } });
   const stop = (e: React.MouseEvent) => e.stopPropagation();
   return (
     <div
@@ -63,9 +62,7 @@ export function ProductCard({
           className="absolute top-3 right-3 grid place-items-center h-9 w-9 rounded-full bg-background/90 hover:bg-background transition"
         >
           <Heart
-            className={`h-4 w-4 ${
-              favorited ? "fill-primary stroke-primary" : "text-primary"
-            }`}
+            className={`h-4 w-4 ${favorited ? "fill-primary stroke-primary" : "text-primary"}`}
           />
         </button>
       </div>
@@ -79,9 +76,7 @@ export function ProductCard({
               {brl(product.oldPrice)}
             </span>
           ) : null}
-          <span className="text-lg font-bold text-primary">
-            {brl(product.price)}
-          </span>
+          <span className="text-lg font-bold text-primary">{brl(product.price)}</span>
         </div>
         <div className="text-xs text-muted-foreground mt-1">
           ou <strong>3x de {brl(installment)}</strong> sem juros

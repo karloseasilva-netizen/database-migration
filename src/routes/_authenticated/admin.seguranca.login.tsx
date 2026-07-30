@@ -27,9 +27,7 @@ function LoginPolicy() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl text-primary">Login</h1>
-        <p className="text-sm text-muted-foreground">
-          Políticas de autenticação e acesso da loja.
-        </p>
+        <p className="text-sm text-muted-foreground">Políticas de autenticação e acesso da loja.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {items.map((i) => (

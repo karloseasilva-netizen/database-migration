@@ -19,7 +19,10 @@ export const Route = createFileRoute("/produtos/$id")({
       .maybeSingle();
     dbProduct = bySlug;
 
-    if (!dbProduct && params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    if (
+      !dbProduct &&
+      params.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+    ) {
       const { data: byId } = await supabase
         .from("products")
         .select("*")
@@ -59,9 +62,9 @@ function ProductPage() {
   const [imgIdx, setImgIdx] = useState(0);
   const gallery = product.gallery ?? [product.image];
   const cat = getCategory(product.categorySlug);
-  const related = products.filter(
-    (p) => p.categorySlug === product.categorySlug && p.id !== product.id,
-  ).slice(0, 4);
+  const related = products
+    .filter((p) => p.categorySlug === product.categorySlug && p.id !== product.id)
+    .slice(0, 4);
   const favorited = favorites.has(product.id);
 
   return (
@@ -78,11 +81,7 @@ function ProductPage() {
       <div className="mx-auto max-w-7xl px-4 mt-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
         <div>
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-secondary/40">
-            <img
-              src={gallery[imgIdx]}
-              alt={product.name}
-              className="h-full w-full object-cover"
-            />
+            <img src={gallery[imgIdx]} alt={product.name} className="h-full w-full object-cover" />
             {product.discount && (
               <span className="absolute top-4 left-4 px-3 py-1 rounded-md text-xs font-bold text-primary-foreground bg-destructive">
                 -{product.discount}%
@@ -122,26 +121,20 @@ function ProductPage() {
               {product.rating.toFixed(1)} · {product.reviews} avaliações
             </span>
           </div>
-          <h1 className="mt-3 font-serif text-3xl sm:text-4xl text-foreground">
-            {product.name}
-          </h1>
+          <h1 className="mt-3 font-serif text-3xl sm:text-4xl text-foreground">{product.name}</h1>
           <div className="mt-4 flex items-baseline gap-3">
             {product.oldPrice && (
               <span className="text-lg text-muted-foreground line-through">
                 {brl(product.oldPrice)}
               </span>
             )}
-            <span className="text-3xl font-bold text-primary">
-              {brl(product.price)}
-            </span>
+            <span className="text-3xl font-bold text-primary">{brl(product.price)}</span>
           </div>
           <div className="text-sm text-muted-foreground mt-1">
             ou <strong>3x de {brl(product.price / 3)}</strong> sem juros · 5% OFF no PIX
           </div>
 
-          <p className="mt-6 text-sm text-foreground/80 leading-relaxed">
-            {product.description}
-          </p>
+          <p className="mt-6 text-sm text-foreground/80 leading-relaxed">{product.description}</p>
 
           <div className="mt-6">
             <div className="text-sm font-semibold mb-2">
@@ -213,16 +206,12 @@ function ProductPage() {
               className="grid place-items-center h-12 w-12 rounded-full border border-border hover:border-primary transition"
             >
               <Heart
-                className={`h-5 w-5 ${
-                  favorited ? "fill-primary stroke-primary" : "text-primary"
-                }`}
+                className={`h-5 w-5 ${favorited ? "fill-primary stroke-primary" : "text-primary"}`}
               />
             </button>
           </div>
           <div className="mt-3 text-xs text-muted-foreground">
-            {product.stock > 0
-              ? `${product.stock} unidades em estoque`
-              : "Fora de estoque"}
+            {product.stock > 0 ? `${product.stock} unidades em estoque` : "Fora de estoque"}
           </div>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -230,9 +219,7 @@ function ProductPage() {
               <Truck className="h-6 w-6 text-primary shrink-0" />
               <div className="text-sm">
                 <div className="font-semibold">Frete para todo Brasil</div>
-                <div className="text-xs text-muted-foreground">
-                  Frete grátis acima de R$ 199
-                </div>
+                <div className="text-xs text-muted-foreground">Frete grátis acima de R$ 199</div>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-secondary/40 rounded-xl p-4">

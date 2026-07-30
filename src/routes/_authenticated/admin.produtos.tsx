@@ -8,7 +8,17 @@ import {
 } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Search, Image as ImageIcon, X } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Image as ImageIcon,
+  X,
+  Download,
+  Upload,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   adminListProducts,
@@ -18,9 +28,12 @@ import {
   adminDeleteProduct,
   adminUpsertVariant,
   adminDeleteVariant,
+  adminBulkImportProducts,
 } from "@/lib/admin.functions";
 import { CATEGORIES, brl } from "@/lib/shop-data";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import * as XLSX from "xlsx";
+import { supabase } from "@/integrations/supabase/client";
 
 const productsQuery = queryOptions({
   queryKey: ["admin", "products"],
@@ -37,6 +50,7 @@ type FormState = {
   slug: string;
   name: string;
   description: string;
+  sku: string;
   price: string;
   old_price: string;
   discount: string;
@@ -57,6 +71,7 @@ const empty: FormState = {
   slug: "",
   name: "",
   description: "",
+  sku: "",
   price: "0",
   old_price: "",
   discount: "",
@@ -79,10 +94,357 @@ function ProductsAdmin() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [modal, setModal] = useState<null | FormState>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const createFn = useServerFn(adminCreateProduct);
   const updateFn = useServerFn(adminUpdateProduct);
   const deleteFn = useServerFn(adminDeleteProduct);
+  const importFn = useServerFn(adminBulkImportProducts);
+
+  function downloadBaseTemplate() {
+    const headers = [
+      "Handle/Slug",
+      "Nome",
+      "Descrição",
+      "Preço",
+      "Preço Antigo",
+      "Desconto (%)",
+      "Tag",
+      "Marca",
+      "URL Imagem",
+      "Galeria",
+      "Categoria",
+      "Subcategoria",
+      "Cores Cadastradas",
+      "Tamanhos Cadastrados",
+      "Estoque Geral",
+      "Alerta Estoque Baixo",
+      "Ativo",
+      "SKU Produto",
+      "Variante Tamanho",
+      "Variante Cor",
+      "Variante SKU",
+      "Variante Estoque",
+      "Variante Preço",
+    ];
+
+    const examples = [
+      {
+        "Handle/Slug": "sutia-renda-basico",
+        Nome: "Sutiã de Renda Básico",
+        Descrição: "Sutiã confortável com detalhes em renda e alças reguláveis.",
+        Preço: 49.9,
+        "Preço Antigo": 59.9,
+        "Desconto (%)": 16,
+        Tag: "TOP",
+        Marca: "Puro Fio",
+        "URL Imagem": "https://images.unsplash.com/photo-1594913785162-e67853f23ee7",
+        Galeria: "https://images.unsplash.com/photo-1594913785162-e67853f23ee7",
+        Categoria: "sutias",
+        Subcategoria: "Sem Bojo",
+        "Cores Cadastradas": "Preto, Romance",
+        "Tamanhos Cadastrados": "P, M, G",
+        "Estoque Geral": 0,
+        "Alerta Estoque Baixo": 5,
+        Ativo: "true",
+        "SKU Produto": "SUT-REND-BAS",
+        "Variante Tamanho": "M",
+        "Variante Cor": "Preto",
+        "Variante SKU": "SUT-REND-BAS-M-PRETO",
+        "Variante Estoque": 10,
+        "Variante Preço": "",
+      },
+      {
+        "Handle/Slug": "sutia-renda-basico",
+        Nome: "",
+        Descrição: "",
+        Preço: 49.9,
+        "Preço Antigo": "",
+        "Desconto (%)": "",
+        Tag: "",
+        Marca: "",
+        "URL Imagem": "",
+        Galeria: "",
+        Categoria: "",
+        Subcategoria: "",
+        "Cores Cadastradas": "",
+        "Tamanhos Cadastrados": "",
+        "Estoque Geral": "",
+        "Alerta Estoque Baixo": "",
+        Ativo: "",
+        "SKU Produto": "",
+        "Variante Tamanho": "G",
+        "Variante Cor": "Romance",
+        "Variante SKU": "SUT-REND-BAS-G-ROM",
+        "Variante Estoque": 15,
+        "Variante Preço": "",
+      },
+      {
+        "Handle/Slug": "calcinha-fio-confort",
+        Nome: "Calcinha Fio Confort",
+        Descrição: "Calcinha modelo fio em algodão antialérgico.",
+        Preço: 19.9,
+        "Preço Antigo": "",
+        "Desconto (%)": "",
+        Tag: "NOVO",
+        Marca: "Puro Fio",
+        "URL Imagem": "https://images.unsplash.com/photo-1594913785162-e67853f23ee7",
+        Galeria: "",
+        Categoria: "calcinhas",
+        Subcategoria: "Fio Dental",
+        "Cores Cadastradas": "",
+        "Tamanhos Cadastrados": "",
+        "Estoque Geral": 50,
+        "Alerta Estoque Baixo": 3,
+        Ativo: "true",
+        "SKU Produto": "CAL-FIO-CONF",
+        "Variante Tamanho": "",
+        "Variante Cor": "",
+        "Variante SKU": "",
+        "Variante Estoque": "",
+        "Variante Preço": "",
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(examples, { header: headers });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Modelo");
+    XLSX.writeFile(wb, "modelo_produtos_purofio.xlsx");
+    toast.success("Modelo baixado com sucesso!");
+  }
+
+  async function exportToXlsx() {
+    try {
+      const { data: dbProducts, error: prodErr } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (prodErr) throw prodErr;
+
+      const { data: dbVariants, error: varErr } = await supabase
+        .from("product_variants")
+        .select("*")
+        .order("created_at");
+      if (varErr) throw varErr;
+
+      const variantsMap = new Map<string, any[]>();
+      for (const v of dbVariants || []) {
+        const list = variantsMap.get(v.product_id) ?? [];
+        list.push(v);
+        variantsMap.set(v.product_id, list);
+      }
+
+      const rows: any[] = [];
+
+      for (const p of dbProducts || []) {
+        const pVariants = variantsMap.get(p.id) ?? [];
+
+        if (pVariants.length === 0) {
+          rows.push({
+            "Handle/Slug": p.slug,
+            Nome: p.name,
+            Descrição: p.description ?? "",
+            Preço: p.price,
+            "Preço Antigo": p.old_price ?? "",
+            "Desconto (%)": p.discount ?? "",
+            Tag: p.tag ?? "",
+            Marca: p.brand ?? "",
+            "URL Imagem": p.image_url ?? "",
+            Galeria: Array.isArray(p.gallery) ? p.gallery.join(", ") : "",
+            Categoria: p.category_slug,
+            Subcategoria: p.sub ?? "",
+            "Cores Cadastradas": Array.isArray(p.colors) ? p.colors.join(", ") : "",
+            "Tamanhos Cadastrados": Array.isArray(p.sizes) ? p.sizes.join(", ") : "",
+            "Estoque Geral": p.stock,
+            "Alerta Estoque Baixo": p.low_stock_threshold,
+            Ativo: p.is_active ? "true" : "false",
+            "SKU Produto": p.sku ?? "",
+            "Variante Tamanho": "",
+            "Variante Cor": "",
+            "Variante SKU": "",
+            "Variante Estoque": "",
+            "Variante Preço": "",
+          });
+        } else {
+          pVariants.forEach((v, index) => {
+            rows.push({
+              "Handle/Slug": p.slug,
+              Nome: index === 0 ? p.name : "",
+              Descrição: index === 0 ? (p.description ?? "") : "",
+              Preço: p.price,
+              "Preço Antigo": index === 0 ? (p.old_price ?? "") : "",
+              "Desconto (%)": index === 0 ? (p.discount ?? "") : "",
+              Tag: index === 0 ? (p.tag ?? "") : "",
+              Marca: index === 0 ? (p.brand ?? "") : "",
+              "URL Imagem": index === 0 ? (p.image_url ?? "") : "",
+              Galeria: index === 0 && Array.isArray(p.gallery) ? p.gallery.join(", ") : "",
+              Categoria: index === 0 ? p.category_slug : "",
+              Subcategoria: index === 0 ? (p.sub ?? "") : "",
+              "Cores Cadastradas":
+                index === 0 && Array.isArray(p.colors) ? p.colors.join(", ") : "",
+              "Tamanhos Cadastrados":
+                index === 0 && Array.isArray(p.sizes) ? p.sizes.join(", ") : "",
+              "Estoque Geral": index === 0 ? p.stock : "",
+              "Alerta Estoque Baixo": index === 0 ? p.low_stock_threshold : "",
+              Ativo: index === 0 ? (p.is_active ? "true" : "false") : "",
+              "SKU Produto": index === 0 ? (p.sku ?? "") : "",
+              "Variante Tamanho": v.size ?? "",
+              "Variante Cor": v.color ?? "",
+              "Variante SKU": v.sku ?? "",
+              "Variante Estoque": v.stock,
+              "Variante Preço": v.price_override ?? "",
+            });
+          });
+        }
+      }
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Produtos");
+      XLSX.writeFile(wb, `produtos_exportados_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success("Produtos exportados com sucesso!");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha na exportação");
+    }
+  }
+
+  async function importFromXlsx(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target?.result;
+        if (!data) throw new Error("Não foi possível ler os dados do arquivo.");
+
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json<any>(sheet);
+
+        if (rows.length === 0) throw new Error("A planilha está vazia.");
+
+        const productsMap = new Map<string, any>();
+
+        for (const r of rows) {
+          const slug = String(r["Handle/Slug"] || "").trim();
+          if (!slug) continue;
+
+          if (!productsMap.has(slug)) {
+            let is_active = true;
+            if (r["Ativo"] !== undefined && r["Ativo"] !== "") {
+              const val = String(r["Ativo"]).toLowerCase().trim();
+              is_active = val === "true" || val === "1" || val === "sim" || val === "yes";
+            }
+
+            let gallery: string[] = [];
+            if (r["Galeria"]) {
+              gallery = String(r["Galeria"])
+                .split(",")
+                .map((url) => url.trim())
+                .filter(Boolean);
+            }
+
+            let colors: string[] = [];
+            if (r["Cores Cadastradas"]) {
+              colors = String(r["Cores Cadastradas"])
+                .split(",")
+                .map((c) => c.trim())
+                .filter(Boolean);
+            }
+
+            let sizes: string[] = [];
+            if (r["Tamanhos Cadastrados"]) {
+              sizes = String(r["Tamanhos Cadastrados"])
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+            }
+
+            productsMap.set(slug, {
+              slug,
+              name: String(r["Nome"] || "").trim(),
+              description: String(r["Descrição"] || "").trim(),
+              price: Number(r["Preço"]) || 0,
+              old_price:
+                r["Preço Antigo"] != null && r["Preço Antigo"] !== ""
+                  ? Number(r["Preço Antigo"])
+                  : null,
+              discount:
+                r["Desconto (%)"] != null && r["Desconto (%)"] !== ""
+                  ? Number(r["Desconto (%)"])
+                  : null,
+              tag: r["Tag"] ? String(r["Tag"]).trim() : null,
+              brand: r["Marca"] ? String(r["Marca"]).trim() : null,
+              image_url: String(r["URL Imagem"] || "").trim(),
+              gallery,
+              category_slug: String(r["Categoria"] || "lingerie").trim(),
+              sub: String(r["Subcategoria"] || "").trim(),
+              colors,
+              sizes,
+              stock: Number(r["Estoque Geral"]) || 0,
+              low_stock_threshold: Number(r["Alerta Estoque Baixo"]) || 5,
+              is_active,
+              sku: r["SKU Produto"] ? String(r["SKU Produto"]).trim() : null,
+              variants: [],
+            });
+          }
+
+          const product = productsMap.get(slug);
+
+          if (!product.name && r["Nome"]) {
+            product.name = String(r["Nome"]).trim();
+          }
+          if (!product.description && r["Descrição"]) {
+            product.description = String(r["Descrição"]).trim();
+          }
+
+          const hasVariant =
+            r["Variante Tamanho"] ||
+            r["Variante Cor"] ||
+            r["Variante SKU"] ||
+            r["Variante Estoque"] !== undefined;
+
+          if (hasVariant) {
+            product.variants.push({
+              size: r["Variante Tamanho"] ? String(r["Variante Tamanho"]).trim() : null,
+              color: r["Variante Cor"] ? String(r["Variante Cor"]).trim() : null,
+              sku: r["Variante SKU"] ? String(r["Variante SKU"]).trim() : null,
+              stock: Number(r["Variante Estoque"]) || 0,
+              price_override:
+                r["Variante Preço"] != null && r["Variante Preço"] !== ""
+                  ? Number(r["Variante Preço"])
+                  : null,
+            });
+          }
+        }
+
+        const productsToImport = Array.from(productsMap.values());
+
+        for (const p of productsToImport) {
+          if (!p.name) {
+            throw new Error(`O produto com o slug "${p.slug}" precisa de um Nome válido.`);
+          }
+        }
+
+        const res = await importFn({ data: { products: productsToImport } });
+        toast.success(`${res.imported_count} produtos importados/atualizados com sucesso!`);
+        qc.invalidateQueries({ queryKey: ["admin"] });
+        qc.invalidateQueries({ queryKey: ["shop"] });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Falha na importação");
+      } finally {
+        setIsImporting(false);
+        e.target.value = "";
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Falha ao ler o arquivo.");
+      setIsImporting(false);
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
   const save = useMutation({
     mutationFn: async (f: FormState) => {
@@ -90,6 +452,7 @@ function ProductsAdmin() {
         slug: f.slug.trim(),
         name: f.name.trim(),
         description: f.description,
+        sku: f.sku.trim() || null,
         price: Number(f.price) || 0,
         old_price: f.old_price ? Number(f.old_price) : null,
         discount: f.discount ? Number(f.discount) : null,
@@ -147,6 +510,7 @@ function ProductsAdmin() {
       slug: p.slug,
       name: p.name,
       description: p.description ?? "",
+      sku: p.sku ?? "",
       price: String(p.price),
       old_price: p.old_price != null ? String(p.old_price) : "",
       discount: p.discount != null ? String(p.discount) : "",
@@ -172,12 +536,43 @@ function ProductsAdmin() {
             {filtered.length} de {products.length} produtos
           </p>
         </div>
-        <button
-          onClick={openNew}
-          className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" /> Novo produto
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={downloadBaseTemplate}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-secondary text-primary cursor-pointer transition-colors shadow-xs"
+            title="Baixar planilha modelo para importação"
+          >
+            <Download className="h-4 w-4" /> Baixar Modelo
+          </button>
+          <button
+            onClick={exportToXlsx}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-secondary text-primary cursor-pointer transition-colors shadow-xs"
+            title="Exportar todos os produtos para XLSX"
+          >
+            <Download className="h-4 w-4" /> Exportar XLSX
+          </button>
+          <label className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-secondary text-primary cursor-pointer transition-colors shadow-xs">
+            {isImporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            Importar XLSX
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              disabled={isImporting}
+              onChange={importFromXlsx}
+              className="hidden"
+            />
+          </label>
+          <button
+            onClick={openNew}
+            className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+          >
+            <Plus className="h-4 w-4" /> Novo produto
+          </button>
+        </div>
       </div>
 
       <div className="bg-background rounded-2xl border border-border p-4 flex flex-wrap gap-3">
@@ -308,6 +703,18 @@ function ProductsAdmin() {
           saving={save.isPending}
         />
       )}
+
+      {isImporting && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex flex-col items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-background rounded-2xl p-6 flex flex-col items-center gap-3 shadow-xl border border-border">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div className="font-serif text-lg text-primary font-semibold">
+              Importando planilha...
+            </div>
+            <div className="text-xs text-muted-foreground">Isso pode levar alguns segundos.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -378,6 +785,13 @@ function ProductModal({
                   required
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                />
+              </Field>
+              <Field label="SKU do Produto">
+                <input
+                  value={form.sku}
+                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                  placeholder="Ex: CAL-FIO-BAS-01"
                 />
               </Field>
               <Field label="Marca">

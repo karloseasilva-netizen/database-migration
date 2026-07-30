@@ -50,11 +50,7 @@ function CategoryPage() {
         crumbs={[{ label: "Categorias" }, { label: category.name }]}
       />
       <div className="mx-auto max-w-7xl px-4 mt-8">
-        <ProductListing
-          products={products}
-          subs={category.subs}
-          initial={{ sub }}
-        />
+        <ProductListing products={products} subs={category.subs} initial={{ sub }} />
       </div>
     </div>
   );

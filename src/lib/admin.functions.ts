@@ -46,6 +46,7 @@ const productInput = z.object({
   stock: z.number().int().min(0).default(0),
   low_stock_threshold: z.number().int().min(0).default(5),
   is_active: z.boolean().default(true),
+  sku: z.string().max(80).nullable().optional(),
 });
 
 export const adminListProducts = createServerFn({ method: "GET" })
@@ -457,4 +458,137 @@ export const adminDashboardStats = createServerFn({ method: "GET" })
       topProducts,
       lowStock,
     };
+  });
+
+export const adminBulkImportProducts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        products: z.array(
+          z.object({
+            slug: z.string(),
+            name: z.string(),
+            description: z.string().optional(),
+            price: z.number(),
+            old_price: z.number().nullable().optional(),
+            discount: z.number().nullable().optional(),
+            tag: z.string().nullable().optional(),
+            brand: z.string().nullable().optional(),
+            image_url: z.string().optional(),
+            gallery: z.array(z.string()).optional(),
+            category_slug: z.string(),
+            sub: z.string().optional(),
+            colors: z.array(z.string()).optional(),
+            sizes: z.array(z.string()).optional(),
+            stock: z.number().optional(),
+            low_stock_threshold: z.number().optional(),
+            is_active: z.boolean().optional(),
+            sku: z.string().nullable().optional(),
+            variants: z
+              .array(
+                z.object({
+                  size: z.string().nullable().optional(),
+                  color: z.string().nullable().optional(),
+                  sku: z.string().nullable().optional(),
+                  stock: z.number(),
+                  price_override: z.number().nullable().optional(),
+                }),
+              )
+              .optional(),
+          }),
+        ),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const admin = await assertAdmin(context);
+
+    // 1. Prepare products payload
+    const productsPayload = data.products.map((p) => ({
+      slug: p.slug,
+      name: p.name,
+      description: p.description ?? "",
+      price: p.price,
+      old_price: p.old_price,
+      discount: p.discount,
+      tag: p.tag,
+      brand: p.brand,
+      image_url: p.image_url ?? "",
+      gallery: p.gallery ?? [],
+      category_slug: p.category_slug,
+      sub: p.sub ?? "",
+      colors: p.colors ?? [],
+      sizes: p.sizes ?? [],
+      stock: p.stock ?? 0,
+      low_stock_threshold: p.low_stock_threshold ?? 5,
+      is_active: p.is_active ?? true,
+      sku: p.sku,
+    }));
+
+    if (productsPayload.length === 0) {
+      return { ok: true, imported_count: 0 };
+    }
+
+    // 2. Perform bulk upsert on products
+    const { data: upsertedProducts, error: prodError } = await admin
+      .from("products")
+      .upsert(productsPayload, { onConflict: "slug" })
+      .select("id, slug");
+
+    if (prodError) throw new Error("Erro ao importar produtos: " + prodError.message);
+    if (!upsertedProducts) throw new Error("Falha ao salvar produtos");
+
+    // Create a map of slug to product id
+    const slugToIdMap = new Map<string, string>();
+    for (const p of upsertedProducts) {
+      slugToIdMap.set(p.slug, p.id);
+    }
+
+    // 3. Collect variants to upsert
+    const productIds = Array.from(slugToIdMap.values());
+    const { data: existingVariants, error: varError } = await admin
+      .from("product_variants")
+      .select("*")
+      .in("product_id", productIds);
+
+    if (varError) throw new Error("Erro ao listar variações existentes: " + varError.message);
+
+    const variantsPayload: any[] = [];
+
+    for (const p of data.products) {
+      const productId = slugToIdMap.get(p.slug);
+      if (!productId) continue;
+
+      const variants = p.variants ?? [];
+      for (const v of variants) {
+        // Find if this variant already exists in DB to reuse its ID
+        const match = (existingVariants ?? []).find(
+          (ev) =>
+            ev.product_id === productId &&
+            ((v.sku && ev.sku === v.sku) || (ev.size === v.size && ev.color === v.color)),
+        );
+
+        variantsPayload.push({
+          id: match?.id ?? undefined,
+          product_id: productId,
+          size: v.size || null,
+          color: v.color || null,
+          sku: v.sku || null,
+          stock: v.stock,
+          price_override: v.price_override,
+        });
+      }
+    }
+
+    // 4. Perform bulk upsert on product variants
+    if (variantsPayload.length > 0) {
+      const { error: varUpsertError } = await admin
+        .from("product_variants")
+        .upsert(variantsPayload, { onConflict: "id" });
+
+      if (varUpsertError) throw new Error("Erro ao importar variações: " + varUpsertError.message);
+    }
+
+    return { ok: true, imported_count: productsPayload.length };
   });

@@ -22,7 +22,9 @@ function FeaturedAdmin() {
   const qc = useQueryClient();
   const toggle = useServerFn(toggleFeatured);
   const [q, setQ] = useState("");
-  const filtered = products.filter((p: any) => !q || p.name.toLowerCase().includes(q.toLowerCase()));
+  const filtered = products.filter(
+    (p: any) => !q || p.name.toLowerCase().includes(q.toLowerCase()),
+  );
   const featured = products.filter((p: any) => p.is_featured).length;
 
   async function change(id: string, next: boolean) {
@@ -56,7 +58,9 @@ function FeaturedAdmin() {
           {filtered.map((p: any) => (
             <div key={p.id} className="p-3 flex items-center gap-3">
               <div className="h-12 w-12 bg-secondary rounded-lg overflow-hidden shrink-0">
-                {p.image_url && <img src={p.image_url} alt="" className="w-full h-full object-cover" />}
+                {p.image_url && (
+                  <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{p.name}</div>

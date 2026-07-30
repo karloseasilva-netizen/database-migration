@@ -31,9 +31,7 @@ function FavoritesPage() {
         {items.length === 0 ? (
           <div className="text-center py-20">
             <Heart className="h-14 w-14 text-primary/40 mx-auto" />
-            <p className="mt-4 text-muted-foreground">
-              Você ainda não favoritou nenhum produto.
-            </p>
+            <p className="mt-4 text-muted-foreground">Você ainda não favoritou nenhum produto.</p>
             <Link
               to="/produtos"
               className="inline-block mt-6 rounded-full bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold"

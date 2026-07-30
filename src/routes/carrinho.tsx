@@ -63,11 +63,7 @@ function CartPage() {
               className="flex gap-4 items-center bg-background border border-border rounded-2xl p-4"
             >
               <Link to="/produtos/$id" params={{ id: p.id }} className="shrink-0">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="h-24 w-24 rounded-xl object-cover"
-                />
+                <img src={p.image} alt={p.name} className="h-24 w-24 rounded-xl object-cover" />
               </Link>
               <div className="flex-1 min-w-0">
                 <Link
@@ -138,9 +134,7 @@ function CartPage() {
             <span>Total</span>
             <span>{brl(cartTotal + shipping)}</span>
           </div>
-          <div className="text-xs text-primary">
-            No PIX por {brl(pixTotal)} (5% OFF)
-          </div>
+          <div className="text-xs text-primary">No PIX por {brl(pixTotal)} (5% OFF)</div>
           <Link
             to="/checkout"
             className="block text-center rounded-full bg-primary text-primary-foreground py-3 font-semibold hover:opacity-95 transition"

@@ -11,13 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import {
-  CATEGORIES,
-  FEATURED_IDS,
-  HERO_SLIDES,
-  OFFER_IDS,
-  PRODUCTS,
-} from "@/lib/shop-data";
+import { CATEGORIES, FEATURED_IDS, HERO_SLIDES, OFFER_IDS, PRODUCTS } from "@/lib/shop-data";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { useShop } from "@/lib/shop-context";
 
@@ -43,21 +37,23 @@ function Home() {
   const { products } = useShop();
 
   const dbFeatured = products.filter((p) => p.isFeatured);
-  const featured = dbFeatured.length > 0
-    ? dbFeatured
-    : FEATURED_IDS.map((id) => products.find((p) => p.id === id)!).filter(Boolean);
+  const featured =
+    dbFeatured.length > 0
+      ? dbFeatured
+      : FEATURED_IDS.map((id) => products.find((p) => p.id === id)!).filter(Boolean);
 
   const dbOffers = products.filter((p) => p.discount);
-  const offers = dbOffers.length > 0
-    ? dbOffers
-    : OFFER_IDS.map((id) => products.find((p) => p.id === id)!).filter(Boolean);
+  const offers =
+    dbOffers.length > 0
+      ? dbOffers
+      : OFFER_IDS.map((id) => products.find((p) => p.id === id)!).filter(Boolean);
 
   const { data: dbBanners } = useQuery({
     queryKey: ["home", "banners"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("banners")
-        .select("image_url, link_url, title, position")
+        .select("image_url, mobile_image_url, link_url, title, position")
         .eq("is_active", true)
         .order("position");
       if (error) throw error;
@@ -66,14 +62,21 @@ function Home() {
   });
   const slides =
     dbBanners && dbBanners.length > 0
-      ? dbBanners.map((b) => ({ src: b.image_url, href: b.link_url, title: b.title }))
-      : HERO_SLIDES.map((src) => ({ src, href: null as string | null, title: null as string | null }));
+      ? dbBanners.map((b) => ({
+          src: b.image_url,
+          mobileSrc: b.mobile_image_url,
+          href: b.link_url,
+          title: b.title,
+        }))
+      : HERO_SLIDES.map((src) => ({
+          src,
+          mobileSrc: null as string | null,
+          href: null as string | null,
+          title: null as string | null,
+        }));
 
   useEffect(() => {
-    const id = setInterval(
-      () => setHeroIndex((i) => (i + 1) % Math.max(slides.length, 1)),
-      5000,
-    );
+    const id = setInterval(() => setHeroIndex((i) => (i + 1) % Math.max(slides.length, 1)), 5000);
     return () => clearInterval(id);
   }, [slides.length]);
 
@@ -86,27 +89,26 @@ function Home() {
       <section className="w-full mt-3 sm:mt-4">
         <div className="relative overflow-hidden h-[240px] sm:h-[420px] lg:h-[500px]">
           {slides.map((s, i) => {
-            const img = (
-              <img
-                src={s.src}
-                alt={s.title ?? ""}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+            const content = (
+              <picture
+                className={`absolute inset-0 h-full w-full transition-opacity duration-1000 ${
                   i === heroIndex ? "opacity-100" : "opacity-0"
                 }`}
-              />
+              >
+                {s.mobileSrc && <source media="(max-width: 640px)" srcSet={s.mobileSrc} />}
+                <img src={s.src} alt={s.title ?? ""} className="h-full w-full object-cover" />
+              </picture>
             );
             return s.href ? (
-              <a key={i} href={s.href} className="absolute inset-0">
-                {img}
+              <a key={i} href={s.href} className="absolute inset-0 block">
+                {content}
               </a>
             ) : (
-              <div key={i}>{img}</div>
+              <div key={i}>{content}</div>
             );
           })}
           <button
-            onClick={() =>
-              setHeroIndex((i) => (i - 1 + slides.length) % slides.length)
-            }
+            onClick={() => setHeroIndex((i) => (i - 1 + slides.length) % slides.length)}
             aria-label="Slide anterior"
             className="absolute left-4 top-1/2 -translate-y-1/2 z-10 grid place-items-center h-11 w-11 rounded-full bg-background/70 hover:bg-background transition backdrop-blur-sm"
           >
@@ -158,9 +160,7 @@ function Home() {
         <div className="flex items-end justify-between gap-4 mb-5">
           <div>
             <h2 className="font-serif text-3xl sm:text-4xl">Destaques</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              As favoritas da Puro Fio para você
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">As favoritas da Puro Fio para você</p>
           </div>
           <Link
             to="/produtos"
@@ -222,9 +222,7 @@ function Home() {
       <section className="mx-auto max-w-7xl px-4 mt-16">
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl sm:text-4xl">Explore por Categoria</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Encontre o que combina com você
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Encontre o que combina com você</p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
           {CATEGORIES.map((c) => (

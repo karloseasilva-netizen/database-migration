@@ -73,7 +73,10 @@ export function Header() {
           <span className="sm:hidden opacity-95">Frete grátis acima de R$ 199</span>
           <div className="flex items-center gap-4">
             {store.phone && (
-              <a href={`tel:${store.phone.replace(/\D/g, "")}`} className="hidden sm:inline-flex items-center gap-1 hover:opacity-80">
+              <a
+                href={`tel:${store.phone.replace(/\D/g, "")}`}
+                className="hidden sm:inline-flex items-center gap-1 hover:opacity-80"
+              >
                 <Phone className="h-3 w-3" /> {store.phone}
               </a>
             )}
@@ -183,7 +186,10 @@ export function Header() {
                 <User className="h-6 w-6 text-primary" />
                 <div className="leading-tight">
                   <div className="text-xs text-muted-foreground">Olá,</div>
-                  <div className="font-semibold truncate max-w-[120px]">{(user.user_metadata?.full_name as string)?.split(" ")[0] || user.email?.split("@")[0]}</div>
+                  <div className="font-semibold truncate max-w-[120px]">
+                    {(user.user_metadata?.full_name as string)?.split(" ")[0] ||
+                      user.email?.split("@")[0]}
+                  </div>
                 </div>
               </Link>
             ) : (
@@ -357,7 +363,13 @@ export function Header() {
 
             <div className="p-5 border-t border-border text-xs text-muted-foreground space-y-2">
               {user && (
-                <button onClick={() => { signOut(); setMobileNavOpen(false); }} className="flex items-center gap-2 text-primary font-semibold mb-2">
+                <button
+                  onClick={() => {
+                    signOut();
+                    setMobileNavOpen(false);
+                  }}
+                  className="flex items-center gap-2 text-primary font-semibold mb-2"
+                >
                   <LogOut className="h-4 w-4" /> Sair da conta
                 </button>
               )}

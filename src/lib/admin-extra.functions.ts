@@ -79,9 +79,7 @@ export const reportTopProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
-    const { data: items } = await admin
-      .from("order_items")
-      .select("product_name, quantity, price");
+    const { data: items } = await admin.from("order_items").select("product_name, quantity, price");
     const map = new Map<string, { name: string; units: number; revenue: number }>();
     for (const it of (items ?? []) as any[]) {
       const cur = map.get(it.product_name) ?? { name: it.product_name, units: 0, revenue: 0 };
@@ -97,10 +95,15 @@ export const reportCustomers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const admin = await assertAdmin(context);
     const [{ data: orders }, authList] = await Promise.all([
-      admin.from("orders").select("user_id, total, status, created_at, customer_name, customer_email"),
+      admin
+        .from("orders")
+        .select("user_id, total, status, created_at, customer_name, customer_email"),
       admin.auth.admin.listUsers({ page: 1, perPage: 200 }),
     ]);
-    const byUser = new Map<string, { name: string; email: string; count: number; spent: number; last: string | null }>();
+    const byUser = new Map<
+      string,
+      { name: string; email: string; count: number; spent: number; last: string | null }
+    >();
     for (const o of (orders ?? []) as any[]) {
       const key = o.user_id || o.customer_email || "anon";
       const cur = byUser.get(key) ?? {
@@ -156,6 +159,7 @@ export const exportOrdersCsv = createServerFn({ method: "GET" })
 const bannerInput = z.object({
   title: z.string().max(200).nullable().optional(),
   image_url: z.string().min(1).max(1000),
+  mobile_image_url: z.string().max(1000).nullable().optional(),
   link_url: z.string().max(1000).nullable().optional(),
   position: z.number().int().min(0).default(0),
   is_active: z.boolean().default(true),
@@ -322,7 +326,9 @@ export const grantRoleByEmail = createServerFn({ method: "POST" })
       .from("user_roles")
       .upsert({ user_id: user.id, role: data.role } as any, { onConflict: "user_id,role" });
     if (error) throw new Error(error.message);
-    await logAction(admin, context.userId, null, "grant_role", "user_roles", user.id, { role: data.role });
+    await logAction(admin, context.userId, null, "grant_role", "user_roles", user.id, {
+      role: data.role,
+    });
     return { ok: true };
   });
 
@@ -344,7 +350,9 @@ export const revokeRole = createServerFn({ method: "POST" })
       .eq("user_id", data.user_id)
       .eq("role", data.role);
     if (error) throw new Error(error.message);
-    await logAction(admin, context.userId, null, "revoke_role", "user_roles", data.user_id, { role: data.role });
+    await logAction(admin, context.userId, null, "revoke_role", "user_roles", data.user_id, {
+      role: data.role,
+    });
     return { ok: true };
   });
 

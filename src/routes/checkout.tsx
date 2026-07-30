@@ -172,13 +172,11 @@ function CheckoutPage() {
             <div className="bg-secondary/30 rounded-2xl p-6 space-y-4">
               <h2 className="font-serif text-xl text-primary">Pagamento</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {(
-                  [
-                    { id: "pix" as const, label: "PIX (5% OFF)", icon: QrCode },
-                    { id: "credit" as const, label: "Cartão de crédito", icon: CreditCard },
-                    { id: "boleto" as const, label: "Boleto", icon: Barcode },
-                  ]
-                ).map(({ id, label, icon: Icon }) => (
+                {[
+                  { id: "pix" as const, label: "PIX (5% OFF)", icon: QrCode },
+                  { id: "credit" as const, label: "Cartão de crédito", icon: CreditCard },
+                  { id: "boleto" as const, label: "Boleto", icon: Barcode },
+                ].map(({ id, label, icon: Icon }) => (
                   <button
                     type="button"
                     key={id}
@@ -202,9 +200,7 @@ function CheckoutPage() {
                   <Field label="Validade" placeholder="MM/AA" required />
                   <Field label="CVV" required />
                   <div>
-                    <label className="text-xs font-semibold text-foreground/80">
-                      Parcelas
-                    </label>
+                    <label className="text-xs font-semibold text-foreground/80">Parcelas</label>
                     <select className="mt-1 w-full bg-background border border-border rounded-full px-4 py-2.5 text-sm">
                       {Array.from({ length: 10 }).map((_, i) => {
                         const n = i + 1;
@@ -254,11 +250,7 @@ function CheckoutPage() {
           <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
             {items.map(({ p, qty }) => (
               <div key={p.id} className="flex gap-3 items-center text-sm">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="h-12 w-12 rounded-lg object-cover"
-                />
+                <img src={p.image} alt={p.name} className="h-12 w-12 rounded-lg object-cover" />
                 <div className="flex-1 min-w-0">
                   <div className="truncate">{p.name}</div>
                   <div className="text-xs text-muted-foreground">Qtd: {qty}</div>
@@ -282,9 +274,7 @@ function CheckoutPage() {
             <span>{brl(total)}</span>
           </div>
           {payment === "pix" && (
-            <div className="text-xs text-primary">
-              No PIX: {brl(pixTotal)} (5% OFF)
-            </div>
+            <div className="text-xs text-primary">No PIX: {brl(pixTotal)} (5% OFF)</div>
           )}
           <button
             type="button"

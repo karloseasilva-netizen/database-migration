@@ -12,7 +12,13 @@ type Props = {
   className?: string;
 };
 
-export function ImageUpload({ value, onChange, folder = "products", label = "Enviar imagem", className }: Props) {
+export function ImageUpload({
+  value,
+  onChange,
+  folder = "products",
+  label = "Enviar imagem",
+  className,
+}: Props) {
   const upload = useServerFn(uploadImage);
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);

@@ -14,7 +14,10 @@ export const Route = createFileRoute("/produtos/")({
   head: () => ({
     meta: [
       { title: "Todos os produtos — Puro Fio Lingerie" },
-      { name: "description", content: "Explore toda a coleção Puro Fio: lingeries, pijamas, sutiãs e mais." },
+      {
+        name: "description",
+        content: "Explore toda a coleção Puro Fio: lingeries, pijamas, sutiãs e mais.",
+      },
       { property: "og:title", content: "Todos os produtos — Puro Fio Lingerie" },
       { property: "og:description", content: "Explore toda a coleção Puro Fio." },
     ],

@@ -16,6 +16,8 @@ export default defineConfig({
   // (e.g. when the repo is deployed from GitHub to Vercel). Inside Lovable
   // this override is ignored and the Cloudflare preset stays forced.
   nitro: {
-    preset: process.env.VERCEL ? "vercel" : (process.env.NITRO_PRESET as string | undefined) ?? undefined,
+    preset: process.env.VERCEL
+      ? "vercel"
+      : ((process.env.NITRO_PRESET as string | undefined) ?? undefined),
   },
 });

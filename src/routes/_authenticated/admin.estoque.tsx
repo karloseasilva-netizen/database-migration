@@ -240,7 +240,13 @@ function StockAdmin() {
                   onChange={(e) => setMov({ ...mov, variant_id: e.target.value })}
                   className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="">Estoque geral do produto</option>
+                  <option value="">
+                    Estoque geral do produto
+                    {(() => {
+                      const activeProduct = data.products.find((p: any) => p.id === mov.product_id);
+                      return activeProduct?.sku ? ` (SKU: ${activeProduct.sku})` : "";
+                    })()}
+                  </option>
                   {(variantsByProduct.get(mov.product_id) ?? []).map((v: any) => (
                     <option key={v.id} value={v.id}>
                       {[v.size, v.color, v.sku].filter(Boolean).join(" · ")} — {v.stock} un

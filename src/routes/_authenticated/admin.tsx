@@ -110,8 +110,7 @@ function AdminLayout() {
     for (const g of GROUPS) init[g.key] = pathname.startsWith(`/admin/${g.key}`);
     return init;
   });
-  const toggleGroup = (k: string) =>
-    setOpenGroups((s) => ({ ...s, [k]: !s[k] }));
+  const toggleGroup = (k: string) => setOpenGroups((s) => ({ ...s, [k]: !s[k] }));
 
   const NavItems = ({ onClick }: { onClick?: () => void }) => (
     <>
@@ -142,9 +141,7 @@ function AdminLayout() {
               type="button"
               onClick={() => toggleGroup(group.key)}
               className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-sm transition ${
-                groupActive
-                  ? "text-primary font-semibold"
-                  : "text-foreground/70 hover:bg-secondary"
+                groupActive ? "text-primary font-semibold" : "text-foreground/70 hover:bg-secondary"
               }`}
             >
               <span className="flex items-center gap-3">

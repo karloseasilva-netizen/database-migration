@@ -53,9 +53,7 @@ export function SettingsForm({
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl text-primary">{title}</h1>
-        {description && (
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        )}
+        {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
       </div>
       <form
         onSubmit={submit}

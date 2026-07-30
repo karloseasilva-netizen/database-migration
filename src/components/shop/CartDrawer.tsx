@@ -46,20 +46,11 @@ export function CartDrawer() {
             const p = products.find((x) => x.id === id);
             if (!p) return null;
             return (
-              <div
-                key={id}
-                className="flex gap-3 items-center bg-secondary/40 rounded-xl p-3"
-              >
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="h-16 w-16 rounded-lg object-cover"
-                />
+              <div key={id} className="flex gap-3 items-center bg-secondary/40 rounded-xl p-3">
+                <img src={p.image} alt={p.name} className="h-16 w-16 rounded-lg object-cover" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{p.name}</div>
-                  <div className="text-sm text-primary font-semibold">
-                    {brl(p.price)}
-                  </div>
+                  <div className="text-sm text-primary font-semibold">{brl(p.price)}</div>
                   <div className="mt-1 flex items-center gap-2">
                     <button
                       onClick={() => decCart(id)}

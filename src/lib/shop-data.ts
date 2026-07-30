@@ -119,8 +119,7 @@ export const PRODUCTS: Product[] = [
     gallery: [p2, p4, p1],
     categorySlug: "lingeries-conjuntos",
     sub: "Básicos",
-    description:
-      "Sustentação push up com bojo removível e tecido macio para o uso diário.",
+    description: "Sustentação push up com bojo removível e tecido macio para o uso diário.",
     colors: ["Blush", "Branco"],
     sizes: ["36", "38", "40", "42", "44"],
     rating: 4.6,
@@ -456,8 +455,7 @@ export const FEATURED_IDS = [
 
 export const OFFER_IDS = PRODUCTS.filter((p) => p.discount).map((p) => p.id);
 
-export const brl = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+export const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function getProduct(id: string) {
   return PRODUCTS.find((p) => p.id === id);

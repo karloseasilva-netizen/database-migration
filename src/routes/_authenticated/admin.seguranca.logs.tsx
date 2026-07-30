@@ -38,7 +38,9 @@ function Logs() {
                 </td>
                 <td className="p-3 font-medium">{l.action}</td>
                 <td className="p-3 text-xs text-muted-foreground">
-                  {l.entity ? `${l.entity}${l.entity_id ? " · " + String(l.entity_id).slice(0, 8) : ""}` : "—"}
+                  {l.entity
+                    ? `${l.entity}${l.entity_id ? " · " + String(l.entity_id).slice(0, 8) : ""}`
+                    : "—"}
                 </td>
                 <td className="p-3 text-xs text-muted-foreground">
                   {l.user_email || (l.user_id ? String(l.user_id).slice(0, 8) : "sistema")}
